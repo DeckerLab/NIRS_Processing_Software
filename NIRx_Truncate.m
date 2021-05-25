@@ -15,6 +15,7 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
     %  mapping_events is cell array; each element is a structure with the EventID value; and a 2-dim array, which 
     %              for each retained event shows the new event time (in seconds) and the row number in 
     %              tabEvents_ForSubject that was used to decide to retain the event.
+	% some more coomment
     
     mapping_data = [];
     mapping_events={};
