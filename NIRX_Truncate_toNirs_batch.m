@@ -5,18 +5,17 @@
 %to the Excel workbook.  The Excel workbook must have a worksheet named "Event Times"; that worksheet must have
 %at least these columns: Subject, EventID, EventName, Onset_sec, Duration_sec, Keep_Extra_After, Exclude
 
-
-%SubjectCodes = {'CB004','CB008','CB009','CB010','CB011','CB014','CB015','CB017','CB018','CB020','CB021','CB022','CB023','CB024','CB027'};
-SubjectCodes = {'CB027'};
+SubjectCodes = {'CB004','CB008','CB009','CB010','CB011','CB014','CB015','CB017','CB018','CB020', ...
+                'CB021','CB022','CB023','CB024','CB027','CB026','CB029','CB030','CB031'};
+% SubjectCodes = {'CB031'};
 SubjectFolders = SubjectCodes; %can define specifically if folder names are not same as subject codes
 
-
-NIRx_RootFolder = 'D:\NIRS Processing\NIRS Data\ROHC\NIRx';
-Nirs_RootFolder = 'D:\NIRS Processing\NIRS Data\ROHC\Homer';
-Events_ExcelFilename = 'D:\NIRS Processing\NIRS Data\ROHC\Analysis\ROHC Data Summary.xlsm';
-SD_File = 'D:\NIRS Processing\NIRS Data\ROHC\Homer\sdfile.sd';
+ProcessingRoot= 'D:\NIRS Processing\NIRS Data\ROHC';
+NIRx_RootFolder = [ProcessingRoot '\NIRx'];
+Nirs_RootFolder = [ProcessingRoot  '\Homer'];
+Events_ExcelFilename = [ProcessingRoot '\Analysis\ROHC Data Summary.xlsm'];
+SD_File = [ProcessingRoot '\Homer\sdfile.sd'];
     
-
 KeepBefore_secs = 2;
 KeepAfter_secs = 15;
 EventTimeTolerance_secs = 3;
