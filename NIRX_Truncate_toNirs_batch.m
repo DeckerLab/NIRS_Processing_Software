@@ -6,8 +6,8 @@
 %at least these columns: Subject, EventID, EventName, Onset_sec, Duration_sec, Keep_Extra_After, Exclude
 
 
-SubjectCodes = {'CB004','CB008','CB009','CB010','CB011','CB014','CB015','CB017','CB018','CB020','CB021','CB022','CB023','CB024','CB027'};
-%SubjectCodes = {'CB020'};
+%SubjectCodes = {'CB004','CB008','CB009','CB010','CB011','CB014','CB015','CB017','CB018','CB020','CB021','CB022','CB023','CB024','CB027'};
+SubjectCodes = {'CB027'};
 SubjectFolders = SubjectCodes; %can define specifically if folder names are not same as subject codes
 
 
@@ -15,6 +15,11 @@ NIRx_RootFolder = 'D:\NIRS Processing\NIRS Data\ROHC\NIRx';
 Nirs_RootFolder = 'D:\NIRS Processing\NIRS Data\ROHC\Homer';
 Events_ExcelFilename = 'D:\NIRS Processing\NIRS Data\ROHC\Analysis\ROHC Data Summary.xlsm';
 SD_File = 'D:\NIRS Processing\NIRS Data\ROHC\Homer\sdfile.sd';
+    
+
+KeepBefore_secs = 2;
+KeepAfter_secs = 15;
+EventTimeTolerance_secs = 3;
 
 % if ~exist('Events_ExcelFilename','var')
 %     [file,path] = uigetfile({'*.xls;*.xlsb;*.axlsm;*.xlsx',...
@@ -60,7 +65,7 @@ for idx_subject=1:length(SubjectFolders)
     tab_events_subject = tab_events(tab_events.Subject==SubjectCodes{idx_subject},:);
     
     disp ' - truncating data'
-    [mapping_data, mapping_events] = NIRx_Truncate(Nirs_SubjectFolder, tab_events_subject);
+    [mapping_data, mapping_events] = NIRx_Truncate(Nirs_SubjectFolder, tab_events_subject, KeepBefore_secs, KeepAfter_secs, EventTimeTolerance_secs);
     %save the mapping from old to new index values and events
     save([Nirs_SubjectFolder '\truncation_mapping.mat'],'mapping_data','mapping_events','-mat');  %could save as ASCII if needed, but 40 times bigger file
     
@@ -72,7 +77,7 @@ for idx_subject=1:length(SubjectFolders)
     disp ' - create Snirf'
     snirf= SnirfClass(load(Nirs_filename,'-mat'));
     %edit the stims to assign proper names and durations
-    Snirf_SetStims(snirf, tab_events_subject, mapping_data, mapping_events);
+    Snirf_SetStims(snirf, tab_events_subject, mapping_data, mapping_events, EventTimeTolerance_secs, false);
 
     Snirf_filename = [Nirs_SubjectFolder '\' SubjectCodes{idx_subject} '.snirf' ];
     disp(['   Saving Snirf as: '   Snirf_filename]);

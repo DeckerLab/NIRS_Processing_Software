@@ -1,7 +1,7 @@
 function Snirf_SetStims(snirf, tab_events_subject, mapping_data, mapping_events, eventime_tolerance_sec, allow_unmatched_events)
     %This function deletes the exisiting events in the snirf.stim array and recreates them, as specified by the 
     % "tab_events_subject" which is a table that includes at least the following columns: 
-    %    EventID, EventName Onset_sec, Duration_sec, EventName, Exclude
+    %   Subject, EventID, EventName Onset_sec, Duration_sec, EventName, Exclude
     % New events are created based on EventName (each orginal EventID may be changed to new
     % EventID's based on providing distinct EventName values).    
     
@@ -101,9 +101,16 @@ function Snirf_SetStims(snirf, tab_events_subject, mapping_data, mapping_events,
                 end
             end
             
-            if ~found_close_originalevent && allow_unmatched_events
-                %just use the exact time specified in the table, convert to valid file timepoint based on sampling frequency
-                closest_frame_original = round(tab_events_subject.Onset_sec(idx_tabevents)*sampling_frequency)+1;
+            if ~found_close_originalevent
+                if allow_unmatched_events
+                    %just use the exact time specified in the table, convert to valid file timepoint based on sampling frequency
+                    closest_frame_original = round(tab_events_subject.Onset_sec(idx_tabevents)*sampling_frequency)+1;
+                else
+                    error(['When remapping events for Subject ''%s'', failed to find an existing event within %f seconds of the user-defined event named ''%s'' at %f seconds.\n' ...
+                          'Check the original header file to look for the time mark of an event with EventID=%d in section of the recording'], ...
+                          tab_events_subject.Subject(idx_tabevents),eventime_tolerance_sec, event_name, ...
+                          tab_events_subject.Onset_sec(idx_tabevents), event_id_original);
+                end
             end
             if (do_frame_shift)  %if the file was truncated, must change from original index to truncated index values
                 if (closest_frame_original<=length(mapping_data)) && (closest_frame_original>0)

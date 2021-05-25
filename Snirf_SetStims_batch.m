@@ -8,13 +8,13 @@
 % If there is a file with name like "truncation_mapping.mat" in the folder, it uses that to related the times
 % in the Excel file to the new times in the truncated data.
 
-
-% SubjectCodes = {'CB004','CB008','CB009','CB010','CB011','CB014','CB015','CB017','CB018','CB020','CB021','CB022','CB023','CB024','CB027'};
-SubjectCodes = {'CB020'};
+%SubjectCodes = {'CB004','CB008','CB009','CB010','CB011','CB014','CB015','CB017','CB018','CB020','CB021','CB022','CB023','CB024','CB027'};
+SubjectCodes = {'CB010','CB011','CB014','CB015','CB017','CB018','CB020','CB021','CB022','CB023','CB024','CB027'};
 SubjectFolders = SubjectCodes; %can define specifically if folder names are not same as subject codes
 
-Snirf_RootFolder = 'D:\NIRS_Processing\NIRS_Data\ROHC\Homer';
-Events_ExcelFilename = 'D:\NIRS_Processing\NIRS_Data\ROHC\Analysis\ROHC Data Summary.xlsm';
+Snirf_RootFolder = 'D:\NIRS Processing\NIRS Data\ROHC\Homer';
+Events_ExcelFilename = 'D:\NIRS Processing\NIRS Data\ROHC\Analysis\ROHC Data Summary.xlsm';
+EventTimeTolerance_secs = 3;
 
 opts = detectImportOptions(Events_ExcelFilename,'Sheet','Event Times');
 opts=setvartype(opts,'Subject','categorical'); %change this column to categorical, to allow filtering
@@ -65,7 +65,7 @@ for idx_subject=1:length(SubjectFolders)
     snirf_filename = [Snirf_SubjectFolder '\' snirf_dir(1).name];
     snirf = SnirfLoad(snirf_filename);    
     
-    Snirf_SetStims(snirf, tab_events_subject, mapping_data, mapping_events);
+    Snirf_SetStims(snirf, tab_events_subject, mapping_data, mapping_events, EventTimeTolerance_secs, false);
 
     disp ' - save Snirf'
     SnirfSave( snirf_filename, snirf );

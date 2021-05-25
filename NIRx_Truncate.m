@@ -1,4 +1,4 @@
-function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEvents_ForSubject, KeepBefore_secs, KeepAfter_secs)
+function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEvents_ForSubject, KeepBefore_secs, KeepAfter_secs, EventTimeTolerance_secs)
     %Caller provides path to a folder with .hdr, .wl1, .wl2 files; and a
     %table that describes the Events and periods for which sections to 
     %retain.  Table must have these fields: 
@@ -19,10 +19,6 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
     mapping_data = [];
     mapping_events={};
     
-    EventTimeTolerance_secs=1;  %an event is deemed to be in the user-entered windows if it is within this tolerance band;
-        %So if user entered an event window ar 60 seconds, and there is an
-        %event marker at 59.23 seconds, we will assume this is a valid event
-
     if ~exist('Nirs_foldername','var')
        Nirs_foldername = uigetdir(pwd,'Select Nirs Data Folder...');
     end
@@ -33,7 +29,11 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
     if ~exist('KeepAfter_secs','var')
         KeepAfter_secs = 10;
     end
-    
+    if ~exist('EventTimeTolerance_secs','var')
+        EventTimeTolerance_secs = 2;  %an event is deemed to be in the user-entered windows if it is within 
+        % this tolerance band (+/- seconds); So if user entered an event window at 60 seconds, and there is an 
+        % event marker at 58.53 seconds with the expected EventID, we will assume this is a valid event
+    end   
   
     %look for these files:
     % *.wl1
@@ -131,7 +131,7 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
         this_StartSec = (this_StartFrame-1)/sampling_freq;
         for idx_eventtable=1:size(tabEvents_ForSubject,1)
             this_keep = (this_EventID==(tabEvents_ForSubject.EventID(idx_eventtable))) && ...
-                    (this_StartSec>=(tabEvents_ForSubject.Onset_sec(idx_eventtable)-EventTimeTolerance_secs)) && ...
+                    (abs(this_StartSec- tabEvents_ForSubject.Onset_sec(idx_eventtable))<= EventTimeTolerance_secs) && ...
                     (this_StartSec<(tabEvents_ForSubject.Onset_sec(idx_eventtable)+tabEvents_ForSubject.Duration_sec(idx_eventtable))) && ...
                     isempty(tabEvents_ForSubject.Exclude{idx_eventtable}) && ...
                     datarows_tokeep(this_StartFrame)==1 ;  %check if this is an event in user-declared list, and make sure that this data was retained
