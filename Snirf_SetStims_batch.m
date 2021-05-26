@@ -12,8 +12,9 @@
 SubjectCodes = {'CB010','CB011','CB014','CB015','CB017','CB018','CB020','CB021','CB022','CB023','CB024','CB027'};
 SubjectFolders = SubjectCodes; %can define specifically if folder names are not same as subject codes
 
-Snirf_RootFolder = 'D:\NIRS Processing\NIRS Data\ROHC\Homer';
-Events_ExcelFilename = 'D:\NIRS Processing\NIRS Data\ROHC\Analysis\ROHC Data Summary.xlsm';
+ProcessingRoot= 'D:\NIRS Processing\NIRS Data\ROHC';
+Snirf_RootFolder = [ProcessingRoot '\Homer'];
+Events_ExcelFilename = [ProcessingRoot '\Analysis\ROHC Data Summary.xlsm'];
 EventTimeTolerance_secs = 3;
 
 opts = detectImportOptions(Events_ExcelFilename,'Sheet','Event Times');

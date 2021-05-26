@@ -31,7 +31,17 @@ opts=setvartype(opts,'Subject','categorical'); %change this column to categorica
 opts=setvartype(opts,'Exclude','char');  
 tab_events = readtable(Events_ExcelFilename,opts);
 
-%Check something in the events table. We want to make sure that there is 
+% we need to delete any 'groupResults.mat' file, in the root folder if found
+answer_delgroupesults = '';
+groupresults_filename = [Nirs_RootFolder '\groupResults.mat'];
+if isfile(groupresults_filename) 
+    answer_delgroupesults = questdlg('OK to delete groupResults.mat in root folder from previous Homer3 processing? \nThis is required to avoid conflicts with previous processing.', ...
+	'Confirm file deletion', ...
+	'OK','OK for All','Cancel','OK for All');
+    if (strcmp(answer_delgroupesults,'Cancel')); return; end
+    delete(groupresults_filename);
+end
+
 
 for idx_subject=1:length(SubjectFolders)
     
@@ -44,6 +54,18 @@ for idx_subject=1:length(SubjectFolders)
         mkdir(Nirs_SubjectFolder)
     end
 
+    % we also need to delete any 'groupResults.mat' file in the subject folder, if found
+    groupresults_filename = [Nirs_SubjectFolder '\groupResults.mat'];
+    if isfile(groupresults_filename) 
+        if ~strcmp(answer_delgroupesults,'OK for All')
+            answer_delgroupesults = questdlg(sprintf('OK to delete groupResults.mat in subject folder ''%s'' from previous Homer3 processing?  This is required to avoid conflicts with previous processing.',SubjectFolders{idx_subject}), ...
+            'Confirm file deletion', ...
+            'OK','OK for All','Cancel','OK for All');
+            if (strcmp(answer_delgroupesults,'Cancel')); return; end
+        end
+        delete(groupresults_filename);
+    end       
+    
     %copy wl1, wl2, and hdr files
     copystatus = copyfile(strcat(NIRx_SubjectFolder, '\*.hdr'), Nirs_SubjectFolder);
     if (copystatus==0); error(strcat('ERROR: Cannot find NIRx header file in NIRx subject folder: ',NIRx_SubjectFolder )); end
