@@ -2,7 +2,7 @@
 %Currently it is designed to extract the "beta" values from the results of GLM analysis from each subject run, and
 %save the results into a text file.  The script can be easily reconfigured to extract other desired information, as
 %required.  
-%Tod Flak 25-May-2021
+%Tod Flak 26-May-2021 
 
 beta_scale = 1e6;
 
