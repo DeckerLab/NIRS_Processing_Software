@@ -4,6 +4,8 @@
 %required.  
 %Tod Flak 25-May-2021
 
+beta_scale = 1e6;
+
 groupresults_filename = 'groupResults.mat'; %look in the current directory
 output_filename = 'groupResults.txt';
 path = [pwd '\'];  %get current directory
@@ -18,8 +20,20 @@ response = inputdlg('If desired, change output file name','Output file name',[1 
 output_filename = [path  response{1}];
 disp(['Creating file:' output_filename]);
 
-fidOutput = fopen(output_filename,'wt');
-fprintf(fidOutput,  'Subject\tRunName\tRunIndex\tCondition\tConditionIndex\tSpecies\tSource\tDetector\tChannel\tBeta_e6\n');
+append_tofile = false;
+if isfile(output_filename)
+    append_tofile= ( menu('The output file already exists.  Do you want to append to that file?\n (''No'' will overwrite existing file).','Yes','No')==1);
+end
+
+DataGroup = inputdlg('Assign a name to this data group.','Data Group name',[1 40]);
+DataGroup = DataGroup{1};
+
+if append_tofile 
+    fidOutput = fopen(output_filename,'at');
+else
+    fidOutput = fopen(output_filename,'wt');
+    fprintf(fidOutput,  'DataGroup\tSubject\tRunName\tRunIndex\tCondition\tConditionIndex\tSpecies\tSource\tDetector\tChannel\tBeta_scaled\n');
+end
 
 groupdata = load(groupresults_filename);
 if isempty(groupdata); error('Selected file has no Matlab objects'); end
@@ -42,8 +56,8 @@ for idx_subj=1:length(groupdata.group.subjs)
     for idx_run=1:length(this_subj.runs)
         this_run = this_subj.runs(1,idx_run);
         this_run.Load;
-        if isempty(this_run.procStream.output.misc.beta)
-            error(['For subject run ''%s'' the procStream.output.misc.beta is empty.\n' ...
+        if isempty(this_run.procStream.output.misc)
+            error(['For subject run ''%s'' the procStream.output.misc is empty.\n' ...
                     'This may indicate that the dataset has not been properly processed.'], this_run.name);
         end
         
@@ -79,9 +93,9 @@ for idx_subj=1:length(groupdata.group.subjs)
                 for idx_stim=1:length(stims)
                     this_stim = stims(1,idx_stim);
                         %fprintf(fidOutput, 'Subject\tRunName\tRunIndex\tCondition\tConditionIndex\tSpecies\tSource\tDetector\tChannel\tBeta');
-                        fprintf(fidOutput, '%s\t%s\t%d\t%s\t%d\t%s\t%d\t%d\t%d\t%f\n', ...
-                                   subj_name, this_run.name, this_run.iRun, this_stim.name, idx_stim, Hb_species{idx_species}, ...
-                                   this_measure.sourceIndex, this_measure.detectorIndex,idx_measure,beta_4d(1,idx_species,idx_measure,idx_stim)*1e6);
+                        fprintf(fidOutput, '%s\t%s\t%s\t%d\t%s\t%d\t%s\t%d\t%d\t%d\t%f\n', ...
+                                   DataGroup, subj_name, this_run.name, this_run.iRun, this_stim.name, idx_stim, Hb_species{idx_species}, ...
+                                   this_measure.sourceIndex, this_measure.detectorIndex,idx_measure,beta_4d(1,idx_species,idx_measure,idx_stim)*beta_scale);
                 end
             end
         end
