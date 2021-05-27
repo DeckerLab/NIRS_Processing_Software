@@ -13,7 +13,7 @@ SelectFoldersByPattern = false; %if you set to true, you can use the SelectFolde
 SelectFolders_SearchPattern = 'CB*';  
 NIRx_RootFolder = [ProcessingRoot '\NIRx'];
 Nirs_RootFolder = [ProcessingRoot  '\Homer'];
-Events_ExcelFilename = [ProcessingRoot '\Analysis\Data Summary.xlsm'];
+Events_ExcelFilename = [ProcessingRoot '\Analysis\Data Summary.xlsx'];
 SD_File = [ProcessingRoot '\Homer\sdfile.sd'];
 
 if SelectFoldersByPattern
