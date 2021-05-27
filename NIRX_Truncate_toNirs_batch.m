@@ -57,6 +57,7 @@ opts = detectImportOptions(Events_ExcelFilename,'Sheet','Event Times');
 opts=setvartype(opts,'Subject','categorical'); %change this column to categorical, to allow filtering
 opts=setvartype(opts,'Exclude','char');  
 tab_events = readtable(Events_ExcelFilename,opts);
+response_ExcludedEvents='';
 
 % we need to delete any 'groupResults.mat' file, in the root folder if found
 answer_delgroupesults = '';
@@ -111,6 +112,18 @@ for idx_subject=1:length(SubjectFolders)
     end
     
     tab_events_subject = tab_events(tab_events.Subject==SubjectCodes{idx_subject},:);
+    
+    if (length([tab_events_subject.Exclude{:}])>0) && (~strcmp(response_ExcludedEvents,'OK for all'))
+        response_ExcludedEvents = questdlg(sprintf(['For subject ''%s'' the ''Event Times'' worksheet indicates some excluded events.\n' ...
+            'If you truncate using Excluded events, you will not be able to later reprocess using those events.\n' ...
+            'OK to proceed?'], SubjectCodes{idx_subject}), ...
+            'Truncating with Excluded Events', ...
+            'OK','OK for all','Abort','Abort');
+            if (strcmp(response_ExcludedEvents,'Abort'))
+                return;  %Abort
+            end      
+    end
+    
     
     disp ' - truncating data'
     [mapping_data, mapping_events] = NIRx_Truncate(Nirs_SubjectFolder, tab_events_subject, KeepBefore_secs, KeepAfter_secs, EventTimeTolerance_secs);

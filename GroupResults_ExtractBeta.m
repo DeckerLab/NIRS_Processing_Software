@@ -14,6 +14,7 @@ path = [pwd '\'];  %get current directory
 if ~isfile(groupresults_filename)  
     [file,path] = uigetfile({'*.mat',...
              'Matlab data file (*.mat)'},'Select Group Results Matlab data file ...');
+   if ~ischar(file) &&  file==0; return; end      
    groupresults_filename = [path file];    
 end
 
@@ -75,6 +76,17 @@ for idx_subj=1:length(groupdata.group.subjs)
         
         beta_4d = this_run.procStream.output.misc.beta{1};  % dimensions: # of basis functions ;  # of Hb Species ; # of channels ; # of conditions
         % check the dimensions to make sure it all makes sense.
+        if isempty(beta_4d)  %this indicates the GLM HRF was not computed for this subject.  Warn user, offer to skip
+            response = questdlg(sprintf(['For subject run ''%s'' the ''beta'' object is empty.  This may indicate the GLM failed for this subject.\n' ...
+                'You can abort processing, or skip the output of this subject run.'], this_run.name), ...
+                'Missing GLM betas', ...
+                'Skip run','Abort','Skip run');
+                if (strcmp(response,'Skip run'))
+                    continue; %go to next run
+                else
+                    return;  %Abort
+                end    
+        end
         if size(beta_4d,1)~=1
             error(['This script expects there to be only a single basis function reported in the beta structure.  For subject run ''%s'' the first dimension of the beta object is: %d.\n' ...
                     'If you want to process this, you will need to revise the script slightly.'], this_run.name,size(beta_4d,1));
