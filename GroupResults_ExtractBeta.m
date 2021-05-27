@@ -5,7 +5,7 @@
 %Tod Flak 26-May-2021 
 
 beta_scale = 1e6;
-excludedchannel_outputblank = true;
+excludedchannel_or_stim_outputblank = true;
 
 groupresults_filename = 'groupResults.mat'; %look in the current directory
 output_filename = 'groupResults.txt';
@@ -20,12 +20,12 @@ end
 response = inputdlg('If desired, change output file name','Output file name',[1 40],{output_filename});
 if isempty(response); return; end
 output_filename = [path  response{1}];
-disp(['Creating file:' output_filename]);
+disp(['Creating file:' output_filename]); 
 
 append_tofile = false;
 if isfile(output_filename)
-    append_tofile= ( menu('The output file already exists.  Do you want to append to that file?\n (''No'' will overwrite existing file).','Yes','No')==1);
-    response = questdlg('The output file already exists.  Do you want to append to that file?\n (''No'' will overwrite existing file).', ...
+    response = questdlg(sprintf(['The output file already exists.  Do you want to append to that file?\n' ...
+                                '(''No'' will overwrite existing file).']), ...
         'Append results?', ...
         'Yes','No','Cancel','Yes');
         if (strcmp(response,'Cancel')); return; end    
@@ -95,8 +95,10 @@ for idx_subj=1:length(groupdata.group.subjs)
                     'If you want to process this, you will need to revise the script slightly.'], this_run.name,size(beta_4d,4), length(stims));
         end       
         
-        %determine if all zeros for some channel -- this indicates an excluded channel
-        perchannel_allzero = squeeze(max(beta_4d==0,[],[1 2 4]));
+        %determine if all zeros for some channel or some event -- this indicates an excluded channel, or all stims
+        %of an event being excluded.
+        perchannel_allzero = squeeze(min(beta_4d==0,[],[1 2 4]));
+        perstim_allzero = squeeze(min(beta_4d==0,[],[1 2 3]));
 
         for idx_species=1:size(beta_4d,2)
             for idx_measure = 1:length(measures)
@@ -104,7 +106,8 @@ for idx_subj=1:length(groupdata.group.subjs)
                 for idx_stim=1:length(stims)
                     this_stim = stims(1,idx_stim);
                         %fprintf(fidOutput, 'Subject\tRunName\tRunIndex\tCondition\tConditionIndex\tSpecies\tSource\tDetector\tChannel\tBeta');
-                        if (perchannel_allzero(idx_measure) && excludedchannel_outputblank)
+                        
+                        if ((perchannel_allzero(idx_measure) || perstim_allzero(idx_stim))  && excludedchannel_or_stim_outputblank)
                             %if the channel was excluded, output a blank for the beta
                             fprintf(fidOutput, '%s\t%s\t%s\t%d\t%s\t%d\t%s\t%d\t%d\t%d\t%f\n', ...
                                    DataGroup, subj_name, this_run.name, this_run.iRun, this_stim.name, idx_stim, Hb_species{idx_species}, ...
