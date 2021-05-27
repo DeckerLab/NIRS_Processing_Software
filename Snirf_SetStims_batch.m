@@ -8,14 +8,31 @@
 % If there is a file with name like "truncation_mapping.mat" in the folder, it uses that to related the times
 % in the Excel file to the new times in the truncated data.
 
-%SubjectCodes = {'CB004','CB008','CB009','CB010','CB011','CB014','CB015','CB017','CB018','CB020','CB021','CB022','CB023','CB024','CB027'};
-SubjectCodes = {'CB010','CB011','CB014','CB015','CB017','CB018','CB020','CB021','CB022','CB023','CB024','CB027'};
-SubjectFolders = SubjectCodes; %can define specifically if folder names are not same as subject codes
-
 ProcessingRoot= 'D:\NIRS Processing\NIRS Data\ROHC';
+
+SelectFoldersByPattern = true; %if you set to true, you can use the SelectFolders_SearchPattern pattern to select all 
+        % matching folders for processing.  If set to false, you must set the SubjectFolders list below.
+        
+SelectFolders_SearchPattern = 'CB*';  
 Snirf_RootFolder = [ProcessingRoot '\Homer'];
-Events_ExcelFilename = [ProcessingRoot '\Analysis\ROHC Data Summary.xlsm'];
+Events_ExcelFilename = [ProcessingRoot '\Analysis\ROHC Data Summary.xlsx'];
 EventTimeTolerance_secs = 3;
+
+if SelectFoldersByPattern
+    SubjectFolders = {};
+    dir_result = dir([Snirf_RootFolder '\' SelectFolders_SearchPattern]);
+    for i=1:size(dir_result,1)
+        if dir_result(i).isdir
+            SubjectFolders{1,length(SubjectFolders)+1} = dir_result(i).name;
+        end
+    end
+else
+    %define here if you want to manually define the folders to process
+    SubjectFolders = {'CB004','CB008','CB009','CB010','CB011','CB014','CB015','CB017','CB018','CB020', ...
+                    'CB021','CB022','CB023','CB024','CB027','CB026','CB029','CB030','CB031'};
+end
+
+SubjectCodes = SubjectFolders; %can define specifically if folder names are not same as subject codes
 
 opts = detectImportOptions(Events_ExcelFilename,'Sheet','Event Times');
 opts=setvartype(opts,'Subject','categorical'); %change this column to categorical, to allow filtering

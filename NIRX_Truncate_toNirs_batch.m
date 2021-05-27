@@ -5,16 +5,43 @@
 %to the Excel workbook.  The Excel workbook must have a worksheet named "Event Times"; that worksheet must have
 %at least these columns: Subject, EventID, EventName, Onset_sec, Duration_sec, Keep_Extra_After, Exclude
 
-SubjectCodes = {'CB004','CB008','CB009','CB010','CB011','CB014','CB015','CB017','CB018','CB020', ...
-                'CB021','CB022','CB023','CB024','CB027','CB026','CB029','CB030','CB031'};
-% SubjectCodes = {'CB031'};
-SubjectFolders = SubjectCodes; %can define specifically if folder names are not same as subject codes
-
 ProcessingRoot= 'D:\NIRS Processing\NIRS Data\ROHC';
+
+SelectFoldersByPattern = false; %if you set to true, you can use the SelectFolders_SearchPattern pattern to select all 
+        % matching folders for processing.  If set to false, you must manually set the SubjectFolders list below.
+        
+SelectFolders_SearchPattern = 'CB*';  
 NIRx_RootFolder = [ProcessingRoot '\NIRx'];
 Nirs_RootFolder = [ProcessingRoot  '\Homer'];
-Events_ExcelFilename = [ProcessingRoot '\Analysis\ROHC Data Summary.xlsm'];
+Events_ExcelFilename = [ProcessingRoot '\Analysis\Data Summary.xlsm'];
 SD_File = [ProcessingRoot '\Homer\sdfile.sd'];
+
+if SelectFoldersByPattern
+    SubjectFolders = {};
+    dir_result = dir([NIRx_RootFolder '\' SelectFolders_SearchPattern]);
+    for i=1:size(dir_result,1)
+        if dir_result(i).isdir
+            SubjectFolders{1,length(SubjectFolders)+1} = dir_result(i).name;
+        end
+    end
+    
+    userresponse  = questdlg(sprintf(['Are you sure you want to truncate & convert all %d subject folders in the NIRX folder?\n' ...
+              'This is typically only required if you are have modified the timing of truncation periods, or you are reprocessing the entire dataset.'], length(SubjectFolders)), ...
+	'Truncate/convert all NIRX files?', ...
+	'OK','Cancel','Cancel');
+    if strcmp(userresponse,'Cancel'); return; end
+else
+    
+    %define here if you want to manually define the folders to process.
+    
+%     SubjectFolders = {'CB004','CB008','CB009','CB010','CB011','CB014','CB015','CB017','CB018','CB020', ...
+%                     'CB021','CB022','CB023','CB024','CB027','CB026','CB029','CB030','CB031'};
+
+    %Typically you only need to specify the new datasets that need to be truncated, not the entire group.
+    SubjectFolders = {'CB026','CB029','CB030','CB031'};
+end
+
+SubjectCodes = SubjectFolders; %can define specifically if folder names are not same as subject codes
     
 KeepBefore_secs = 2;
 KeepAfter_secs = 15;
@@ -35,7 +62,7 @@ tab_events = readtable(Events_ExcelFilename,opts);
 answer_delgroupesults = '';
 groupresults_filename = [Nirs_RootFolder '\groupResults.mat'];
 if isfile(groupresults_filename) 
-    answer_delgroupesults = questdlg('OK to delete groupResults.mat in root folder from previous Homer3 processing? \nThis is required to avoid conflicts with previous processing.', ...
+    answer_delgroupesults = questdlg(sprintf('OK to delete groupResults.mat in root folder from previous Homer3 processing? \nThis is required to avoid conflicts with previous processing.'), ...
 	'Confirm file deletion', ...
 	'OK','OK for All','Cancel','OK for All');
     if (strcmp(answer_delgroupesults,'Cancel')); return; end
