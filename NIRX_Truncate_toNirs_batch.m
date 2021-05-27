@@ -5,7 +5,7 @@
 %to the Excel workbook.  The Excel workbook must have a worksheet named "Event Times"; that worksheet must have
 %at least these columns: Subject, EventID, EventName, Onset_sec, Duration_sec, Keep_Extra_After, Exclude
 
-ProcessingRoot= 'D:\NIRS Processing\NIRS Data\ROHC';
+ProcessingRoot= 'D:\Users\todfl\Documents\Decker\NIRs Processing\NIRS Data\ROHC';
 
 SelectFoldersByPattern = false; %if you set to true, you can use the SelectFolders_SearchPattern pattern to select all 
         % matching folders for processing.  If set to false, you must manually set the SubjectFolders list below.
@@ -13,7 +13,7 @@ SelectFoldersByPattern = false; %if you set to true, you can use the SelectFolde
 SelectFolders_SearchPattern = 'CB*';  
 NIRx_RootFolder = [ProcessingRoot '\NIRx'];
 Nirs_RootFolder = [ProcessingRoot  '\Homer'];
-Events_ExcelFilename = [ProcessingRoot '\Analysis\Data Summary.xlsx'];
+Events_ExcelFilename = [ProcessingRoot '\Analysis\ROHC Data Summary.xlsx'];
 SD_File = [ProcessingRoot '\Homer\sdfile.sd'];
 
 if SelectFoldersByPattern
