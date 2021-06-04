@@ -8,13 +8,13 @@
 ProcessingRoot= 'D:\NIRS Processing\NIRS Data\ROHC';
 %ProcessingRoot= 'D:\NIRS_Data\Randolph';
 
-SelectFoldersByPattern = true; %if you set to true, you can use the SelectFolders_SearchPattern pattern to select all 
+SelectFoldersByPattern = false; %if you set to true, you can use the SelectFolders_SearchPattern pattern to select all 
         % matching folders for processing.  If set to false, you must manually set the SubjectFolders list below.
 
 allow_unmatched_events = false;  %set this to 'true' if the original HDR file does not contain proper event
             % markers at the times that you want to truncate around and/or set your new events.
         
-SelectFolders_SearchPattern = 'test*';  
+SelectFolders_SearchPattern = 'CB*';  
 NIRx_RootFolder = [ProcessingRoot '\NIRx'];
 Nirs_RootFolder = [ProcessingRoot  '\Homer'];
 Events_ExcelFilename = [ProcessingRoot '\Analysis\ROHC Data Summary.xlsx'];
