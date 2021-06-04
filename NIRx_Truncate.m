@@ -119,98 +119,99 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
     keyword = 'Events="#';
     tmp = strfind(hdr_str,keyword);
     eventsection_start = find(~cellfun(@isempty,tmp)) + 1; %This gives cell of hdr_str with keyword
-    tmp = strfind(hdr_str(eventsection_start+1:end),'#');
+    tmp = strfind(hdr_str(eventsection_start:end),'#');  %was strfind(hdr_str(eventsection_start+1:end),'#')  but the '+1' was cauaing an error when there are no events in the file
     eventsection_end = find(~cellfun(@isempty,tmp)) - 1;
     eventsection_end = eventsection_start + eventsection_end(1);
     hdr_events = cell2mat(cellfun(@str2num,hdr_str(eventsection_start:eventsection_end),'UniformOutput',0));
-    keep_event = zeros(size(hdr_events,1),1);
-    map_DissallowEventUntilTime = containers.Map('KeyType','int32','ValueType','double');
-    EventID_max = max(tabEvents_ForSubject.EventID);
-    for idx_hdrevent=1:size(hdr_events,1)
-        this_EventID=hdr_events(idx_hdrevent,2);
-        this_StartFrame=hdr_events(idx_hdrevent,3);
-        this_StartSec = (this_StartFrame-1)/sampling_freq;
-        for idx_eventtable=1:size(tabEvents_ForSubject,1)
-            this_keep = (this_EventID==(tabEvents_ForSubject.EventID(idx_eventtable))) && ...
-                    (abs(this_StartSec- tabEvents_ForSubject.Onset_sec(idx_eventtable))<= EventTimeTolerance_secs) && ...
-                    (this_StartSec<(tabEvents_ForSubject.Onset_sec(idx_eventtable)+tabEvents_ForSubject.Duration_sec(idx_eventtable))) && ...
-                    isempty(tabEvents_ForSubject.Exclude{idx_eventtable}) && ...
-                    datarows_tokeep(this_StartFrame)==1 ;  %check if this is an event in user-declared list, and make sure that this data was retained
-            if this_keep && map_DissallowEventUntilTime.isKey(this_EventID) && (this_StartSec<map_DissallowEventUntilTime(this_EventID) )
-                %this prevents keeping a second event of the same type within
-                % the time duration window of the first event
-                this_keep = false;
-            end
-
-            if this_keep
-                keep_event(idx_hdrevent)=1;
-                
-                this_EventName = tabEvents_ForSubject.EventName{idx_eventtable};
-                
-                event_frame_original = this_StartFrame;  
-                event_time_original = this_StartSec;
-                
-                %record the mapping of this retained event
-                idx_e = 0;
-                %try to find a mapping entry with this EventID and EventName
-                bln_EventID_Original_InMapping = false;
-                for idx_e_search = 1:length(mapping_events)
-                    if (mapping_events{idx_e_search}.EventID_Original == this_EventID) 
-                        bln_EventID_Original_InMapping = true;   %We have found this EventID; so if we don't also 
-                           %find this EventName, we will need to assign a new EventID
-                        if strcmp(mapping_events{idx_e_search}.EventName, this_EventName)
-                            idx_e = idx_e_search;
-                            break;
-                        end
-                    end
-                end    
-                if idx_e==0   %this EventID & EventName not yet in the mapping collection
-                   e.EventID_Original = this_EventID;
-                   if bln_EventID_Original_InMapping
-                        e.EventID_New = EventID_max + 1;
-                        EventID_max = e.EventID_New; 
-                   else
-                        e.EventID_New = this_EventID;
-                   end
-                   e.EventName = this_EventName;
-                   e.mapping = [];
-                   mapping_events{1,length(mapping_events)+1} = e;  %add this structure into the collection
-                   idx_e = length(mapping_events);
-                else
-                   e=mapping_events{idx_e};
+    if size(hdr_events,1)>0  %if the file has zero recorded events, don't bother to edit
+        keep_event = zeros(size(hdr_events,1),1);
+        map_DissallowEventUntilTime = containers.Map('KeyType','int32','ValueType','double');
+        EventID_max = max(tabEvents_ForSubject.EventID);
+        for idx_hdrevent=1:size(hdr_events,1)
+            this_EventID=hdr_events(idx_hdrevent,2);
+            this_StartFrame=hdr_events(idx_hdrevent,3);
+            this_StartSec = (this_StartFrame-1)/sampling_freq;
+            for idx_eventtable=1:size(tabEvents_ForSubject,1)
+                this_keep = (this_EventID==(tabEvents_ForSubject.EventID(idx_eventtable))) && ...
+                        (abs(this_StartSec- tabEvents_ForSubject.Onset_sec(idx_eventtable))<= EventTimeTolerance_secs) && ...
+                        (this_StartSec<(tabEvents_ForSubject.Onset_sec(idx_eventtable)+tabEvents_ForSubject.Duration_sec(idx_eventtable))) && ...
+                        isempty(tabEvents_ForSubject.Exclude{idx_eventtable}) && ...
+                        datarows_tokeep(this_StartFrame)==1 ;  %check if this is an event in user-declared list, and make sure that this data was retained
+                if this_keep && map_DissallowEventUntilTime.isKey(this_EventID) && (this_StartSec<map_DissallowEventUntilTime(this_EventID) )
+                    %this prevents keeping a second event of the same type within
+                    % the time duration window of the first event
+                    this_keep = false;
                 end
-                
-                event_frame_new = mapping_data(event_frame_original);
-                event_time_new = round((event_frame_new-1)/sampling_freq,2);
-                mapping_events{1,idx_e}.mapping = cat(1,mapping_events{1,idx_e}.mapping, ...
-                                    [event_frame_original event_time_original event_frame_new event_time_new idx_eventtable]);  %add into the mapping array 
-                %the original frame, new frame, new time of this event and the row in the user event table that was used to qualify the event
 
-                %adjust time of event in the header data
-                hdr_events(idx_hdrevent,1) = event_time_new;
-                hdr_events(idx_hdrevent,2) = e.EventID_New;
-                hdr_events(idx_hdrevent,3) = event_frame_new;
+                if this_keep
+                    keep_event(idx_hdrevent)=1;
 
-                map_DissallowEventUntilTime(this_EventID) = this_StartSec + tabEvents_ForSubject.Duration_sec(idx_eventtable);
-                break;
-            end 
+                    this_EventName = tabEvents_ForSubject.EventName{idx_eventtable};
+
+                    event_frame_original = this_StartFrame;  
+                    event_time_original = this_StartSec;
+
+                    %record the mapping of this retained event
+                    idx_e = 0;
+                    %try to find a mapping entry with this EventID and EventName
+                    bln_EventID_Original_InMapping = false;
+                    for idx_e_search = 1:length(mapping_events)
+                        if (mapping_events{idx_e_search}.EventID_Original == this_EventID) 
+                            bln_EventID_Original_InMapping = true;   %We have found this EventID; so if we don't also 
+                               %find this EventName, we will need to assign a new EventID
+                            if strcmp(mapping_events{idx_e_search}.EventName, this_EventName)
+                                idx_e = idx_e_search;
+                                break;
+                            end
+                        end
+                    end    
+                    if idx_e==0   %this EventID & EventName not yet in the mapping collection
+                       e.EventID_Original = this_EventID;
+                       if bln_EventID_Original_InMapping
+                            e.EventID_New = EventID_max + 1;
+                            EventID_max = e.EventID_New; 
+                       else
+                            e.EventID_New = this_EventID;
+                       end
+                       e.EventName = this_EventName;
+                       e.mapping = [];
+                       mapping_events{1,length(mapping_events)+1} = e;  %add this structure into the collection
+                       idx_e = length(mapping_events);
+                    else
+                       e=mapping_events{idx_e};
+                    end
+
+                    event_frame_new = mapping_data(event_frame_original);
+                    event_time_new = round((event_frame_new-1)/sampling_freq,2);
+                    mapping_events{1,idx_e}.mapping = cat(1,mapping_events{1,idx_e}.mapping, ...
+                                        [event_frame_original event_time_original event_frame_new event_time_new idx_eventtable]);  %add into the mapping array 
+                    %the original frame, new frame, new time of this event and the row in the user event table that was used to qualify the event
+
+                    %adjust time of event in the header data
+                    hdr_events(idx_hdrevent,1) = event_time_new;
+                    hdr_events(idx_hdrevent,2) = e.EventID_New;
+                    hdr_events(idx_hdrevent,3) = event_frame_new;
+
+                    map_DissallowEventUntilTime(this_EventID) = this_StartSec + tabEvents_ForSubject.Duration_sec(idx_eventtable);
+                    break;
+                end 
+            end
         end
+
+        hdr_events(keep_event==0,:)=[];  %delete the events we dont want
+        eventlines=cell(size(hdr_events,1),1);
+        for idx_hdrevent=1:size(hdr_events,1)
+            eventlines(idx_hdrevent)={strjoin([compose('%.2f',hdr_events(idx_hdrevent,1))  compose('%d',hdr_events(idx_hdrevent,2)) compose('%d',hdr_events(idx_hdrevent,3))],'\t')};
+        end
+
+        disp '   writing edited header...'
+        %stick the edited events into the file
+        hdr_str = [hdr_str(1:eventsection_start-1,1); eventlines; hdr_str(eventsection_end+1:end)];
+        %rewrite the header file
+        fid = fopen(hdr_filename,'w');
+        fprintf(fid,'%s\n',hdr_str{:});
+        fclose(fid);    
     end
-    
-    hdr_events(keep_event==0,:)=[];  %delete the events we dont want
-    eventlines=cell(size(hdr_events,1),1);
-    for idx_hdrevent=1:size(hdr_events,1)
-        eventlines(idx_hdrevent)={strjoin([compose('%.2f',hdr_events(idx_hdrevent,1))  compose('%d',hdr_events(idx_hdrevent,2)) compose('%d',hdr_events(idx_hdrevent,3))],'\t')};
-    end
-    
-    disp '   writing edited header...'
-    %stick the edited events into the file
-    hdr_str = [hdr_str(1:eventsection_start-1,1); eventlines; hdr_str(eventsection_end+1:end)];
-    %rewrite the header file
-    fid = fopen(hdr_filename,'w');
-    fprintf(fid,'%s\n',hdr_str{:});
-    fclose(fid);    
-    
 
     disp '   writing edited wavelengths...'
     %rewrite wavelength files

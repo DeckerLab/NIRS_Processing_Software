@@ -5,12 +5,16 @@
 %to the Excel workbook.  The Excel workbook must have a worksheet named "Event Times"; that worksheet must have
 %at least these columns: Subject, EventID, EventName, Onset_sec, Duration_sec, Keep_Extra_After, Exclude
 
-ProcessingRoot= 'D:\Users\todfl\Documents\Decker\NIRs Processing\NIRS Data\ROHC';
+ProcessingRoot= 'D:\NIRS Processing\NIRS Data\ROHC';
+%ProcessingRoot= 'D:\NIRS_Data\Randolph';
 
-SelectFoldersByPattern = false; %if you set to true, you can use the SelectFolders_SearchPattern pattern to select all 
+SelectFoldersByPattern = true; %if you set to true, you can use the SelectFolders_SearchPattern pattern to select all 
         % matching folders for processing.  If set to false, you must manually set the SubjectFolders list below.
+
+allow_unmatched_events = false;  %set this to 'true' if the original HDR file does not contain proper event
+            % markers at the times that you want to truncate around and/or set your new events.
         
-SelectFolders_SearchPattern = 'CB*';  
+SelectFolders_SearchPattern = 'test*';  
 NIRx_RootFolder = [ProcessingRoot '\NIRx'];
 Nirs_RootFolder = [ProcessingRoot  '\Homer'];
 Events_ExcelFilename = [ProcessingRoot '\Analysis\ROHC Data Summary.xlsx'];
@@ -125,7 +129,7 @@ for idx_subject=1:length(SubjectFolders)
     disp ' - create Snirf'
     snirf= SnirfClass(load(Nirs_filename,'-mat'));
     %edit the stims to assign proper names and durations
-    Snirf_SetStims(snirf, tab_events_subject, mapping_data, mapping_events, EventTimeTolerance_secs, false);
+    Snirf_SetStims(snirf, tab_events_subject, mapping_data, mapping_events, EventTimeTolerance_secs, allow_unmatched_events);
 
     Snirf_filename = [Nirs_SubjectFolder '\' SubjectCodes{idx_subject} '.snirf' ];
     disp(['   Saving Snirf as: '   Snirf_filename]);

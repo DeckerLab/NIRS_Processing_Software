@@ -70,9 +70,13 @@ tmp = hdr_str{ind};
 NIRx_Detectors = str2num(tmp(length(keyword)+1:end));
 
 %Compare to SD file for checking...
-if NIRx_Sources ~= SD.nSrcs || NIRx_Detectors ~= SD.nDets;
-   error('The number or sources and detectors in the NIRx files does not match your SD file...');
-end
+%Maybe ignore this error??  This was happening with Randolph data, for which according to the 
+% probeInfo file there are 8 source and only 7 detectors; while the HDR file declares that there are 8 source 
+% and 8 detectors.  So I think best to just bypass this check.  TF 04June2021.
+
+% if NIRx_Sources ~= SD.nSrcs || NIRx_Detectors ~= SD.nDets;
+%    error('The number or sources and detectors in the NIRx files does not match your SD file...');
+% end
 
 %Find Sample rate
 keyword = 'SamplingRate=';
@@ -99,16 +103,21 @@ d = d(:,sd_ind);
 keyword = 'Events="#';
 tmp = strfind(hdr_str,keyword);
 ind = find(~cellfun(@isempty,tmp)) + 1; %This gives cell of hdr_str with keyword
-tmp = strfind(hdr_str(ind+1:end),'#');
+tmp = strfind(hdr_str(ind:end),'#');  %was strfind(hdr_str(ind+1:end),'#')  but the '+1' was cauaing an error when there are no events in the file
 ind2 = find(~cellfun(@isempty,tmp)) - 1;
 ind2 = ind + ind2(1);
 events = cell2mat(cellfun(@str2num,hdr_str(ind:ind2),'UniformOutput',0));
-events = events(:,2:3);
-markertypes = unique(events(:,1));
-s = zeros(length(d),length(markertypes));
-for i = 1:length(markertypes);
-    s(events(find(events(:,1)==markertypes(i)),2),i) = 1;
-end
+if size(events,1)>0
+    events = events(:,2:3);
+    markertypes = unique(events(:,1));
+    s = zeros(length(d),length(markertypes));
+    for i = 1:length(markertypes);
+        s(events(find(events(:,1)==markertypes(i)),2),i) = 1;
+    end
+else
+    s = zeros(length(d),1);
+end    
+
 
 %Create t, aux varibles
 aux = zeros(length(d),8);
