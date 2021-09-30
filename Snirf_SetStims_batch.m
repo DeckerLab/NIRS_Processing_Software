@@ -8,9 +8,10 @@
 % If there is a file with name like "truncation_mapping.mat" in the folder, it uses that to related the times
 % in the Excel file to the new times in the truncated data.
 
-ProcessingRoot= 'D:\NIRS Processing\NIRS Data\ROHC';
+% ProcessingRoot= 'D:\NIRS Processing\NIRS Data\ROHC';
+ProcessingRoot='D:\NIRS_Data\ROHC';
 
-SelectFoldersByPattern = true; %if you set to true, you can use the SelectFolders_SearchPattern pattern to select all 
+SelectFoldersByPattern = false; %if you set to true, you can use the SelectFolders_SearchPattern pattern to select all 
         % matching folders for processing.  If set to false, you must set the SubjectFolders list below.
         
 SelectFolders_SearchPattern = 'CB*';  
@@ -28,8 +29,9 @@ if SelectFoldersByPattern
     end
 else
     %define here if you want to manually define the folders to process
-    SubjectFolders = {'CB004','CB008','CB009','CB010','CB011','CB014','CB015','CB017','CB018','CB020', ...
-                    'CB021','CB022','CB023','CB024','CB027','CB026','CB029','CB030','CB031'};
+%    SubjectFolders = {'CB004','CB008','CB009','CB010','CB011','CB014','CB015','CB017','CB018','CB020', ...
+%                    'CB021','CB022','CB023','CB024','CB027','CB026','CB029','CB030','CB031'};
+    SubjectFolders = {'CB010'};
 end
 
 SubjectCodes = SubjectFolders; %can define specifically if folder names are not same as subject codes
@@ -70,6 +72,19 @@ for idx_subject=1:length(SubjectFolders)
     if isfile(groupresults_filename) 
         if ~strcmp(answer_delgroupesults,'OK for All')
             answer_delgroupesults = questdlg(sprintf('OK to delete groupResults.mat in subject folder ''%s'' from previous Homer3 processing?',SubjectFolders{idx_subject}), ...
+            'Confirm file deletion', ...
+            'OK','OK for All','Cancel','OK for All');
+            if (strcmp(answer_delgroupesults,'Cancel')); return; end
+        end
+        delete(groupresults_filename);
+    end    
+
+    % also look in subfolder 'homerOutput' in subject folder, we need to delete any 'groupResults.mat' file, in that folder if found
+    answer_delgroupesults = '';
+    groupresults_filename = [Snirf_SubjectFolder '\homerOutput\groupResults.mat'];
+    if isfile(groupresults_filename) 
+        if ~strcmp(answer_delgroupesults,'OK for All')
+            answer_delgroupesults = questdlg(sprintf('OK to delete groupResults.mat in subject folder ''%s\\homerOutput'' from previous Homer3 processing?',SubjectFolders{idx_subject}), ...
             'Confirm file deletion', ...
             'OK','OK for All','Cancel','OK for All');
             if (strcmp(answer_delgroupesults,'Cancel')); return; end

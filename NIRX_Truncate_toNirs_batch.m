@@ -7,7 +7,7 @@
 
 ProcessingRoot= 'D:\Users\todfl\Documents\Decker\NIRs Processing\NIRS Data\ROHC';
 
-SelectFoldersByPattern = false; %if you set to true, you can use the SelectFolders_SearchPattern pattern to select all 
+SelectFoldersByPattern = true; %if you set to true, you can use the SelectFolders_SearchPattern pattern to select all 
         % matching folders for processing.  If set to false, you must manually set the SubjectFolders list below.
         
 SelectFolders_SearchPattern = 'CB*';  
@@ -43,8 +43,8 @@ end
 
 SubjectCodes = SubjectFolders; %can define specifically if folder names are not same as subject codes
     
-KeepBefore_secs = 2;
-KeepAfter_secs = 15;
+KeepBefore_secs = 5;
+KeepAfter_secs = 25;
 EventTimeTolerance_secs = 3;
 
 % if ~exist('Events_ExcelFilename','var')
@@ -131,7 +131,7 @@ for idx_subject=1:length(SubjectFolders)
     save([Nirs_SubjectFolder '\truncation_mapping.mat'],'mapping_data','mapping_events','-mat');  %could save as ASCII if needed, but 40 times bigger file
     
     disp ' - converting to Nirs'
-    Nirs_filename = [Nirs_SubjectFolder '\' SubjectCodes{idx_subject} '.nirs' ];
+    Nirs_filename = [Nirs_SubjectFolder '\' SubjectCodes{idx_subject} '_run1.nirs' ];
     NIRx2nirs(Nirs_SubjectFolder,SD_File,Nirs_filename);
     
     
@@ -140,7 +140,7 @@ for idx_subject=1:length(SubjectFolders)
     %edit the stims to assign proper names and durations
     Snirf_SetStims(snirf, tab_events_subject, mapping_data, mapping_events, EventTimeTolerance_secs, false);
 
-    Snirf_filename = [Nirs_SubjectFolder '\' SubjectCodes{idx_subject} '.snirf' ];
+    Snirf_filename = [Nirs_SubjectFolder '\' SubjectCodes{idx_subject} '_run1.snirf' ];
     disp(['   Saving Snirf as: '   Snirf_filename]);
     SnirfSave( Snirf_filename, snirf );
 end

@@ -81,8 +81,8 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
     datacount = size(wl1_2,1);
     datarows_tokeep = zeros(datacount,1);
     for idx_hdrevent=1:size(tabEvents_ForSubject,1)
-        keep_start_frame = round((tabEvents_ForSubject.Onset_sec(idx_hdrevent)-KeepBefore_secs)*sampling_freq)+1;
-        keep_end_frame = keep_start_frame + round((tabEvents_ForSubject.Duration_sec(idx_hdrevent) + ...
+        keep_start_frame = floor((tabEvents_ForSubject.Onset_sec(idx_hdrevent)-KeepBefore_secs)*sampling_freq)+1;
+        keep_end_frame = keep_start_frame + ceil((KeepBefore_secs + tabEvents_ForSubject.Duration_sec(idx_hdrevent) + ...
                                                    tabEvents_ForSubject.Keep_Extra_After(idx_hdrevent) + ...
                                                    KeepAfter_secs )*sampling_freq);
         datarows_tokeep(keep_start_frame:keep_end_frame)=1;
