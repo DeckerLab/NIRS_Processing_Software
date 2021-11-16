@@ -1,4 +1,4 @@
-function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEvents_ForSubject, KeepBefore_secs, KeepAfter_secs, EventTimeTolerance_secs)
+function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEvents_ForSubject, KeepBefore_secs, KeepAfter_secs, EventTimeTolerance_secs, align_segments)
     %Caller provides path to a folder with .hdr, .wl1, .wl2 files; and a
     %table that describes the Events and periods for which sections to 
     %retain.  Table must have these fields: 
@@ -35,7 +35,9 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
         % this tolerance band (+/- seconds); So if user entered an event window at 60 seconds, and there is an 
         % event marker at 58.53 seconds with the expected EventID, we will assume this is a valid event
     end   
-  
+    if ~exist('align_segments','var')
+        align_segments = false;
+    end
     %look for these files:
     % *.wl1
     % *.wl2
@@ -93,6 +95,7 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
     mapping_data = zeros(datacount,1);
     in_window = false;
     new_index_counter = 0;
+	offset = 0;
     for idx_hdrevent=1:datacount
         if (datarows_tokeep(idx_hdrevent)==1)
             new_index_counter = new_index_counter+1;
@@ -102,7 +105,10 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
             in_window=true;
             keep_window_index=keep_window_index+1;
             if (keep_window_index>1)  %only need to shift for windows starting at #2
-                offset = startvals_nextwindow - wl1_2(idx_hdrevent,:);
+				if (align_segments)
+					offset = startvals_nextwindow - wl1_2(idx_hdrevent,:);
+				end
+				
                 wl1_2(idx_hdrevent:datacount,:) = wl1_2(idx_hdrevent:datacount,:) + offset;
             end
         else

@@ -19,6 +19,7 @@ NIRx_RootFolder = [ProcessingRoot '\NIRx'];
 Nirs_RootFolder = [ProcessingRoot  '\Homer'];
 Events_ExcelFilename = [ProcessingRoot '\Analysis\ROHC Data Summary.xlsx'];
 SD_File = [ProcessingRoot '\Homer\sdfile.sd'];
+Truncate_Align_segments = false;	
 
 if SelectFoldersByPattern
     SubjectFolders = {};
@@ -130,7 +131,7 @@ for idx_subject=1:length(SubjectFolders)
     
     
     disp ' - truncating data'
-    [mapping_data, mapping_events] = NIRx_Truncate(Nirs_SubjectFolder, tab_events_subject, KeepBefore_secs, KeepAfter_secs, EventTimeTolerance_secs);
+    [mapping_data, mapping_events] = NIRx_Truncate(Nirs_SubjectFolder, tab_events_subject, KeepBefore_secs, KeepAfter_secs, EventTimeTolerance_secs, Truncate_Align_segments);
     %save the mapping from old to new index values and events
     save([Nirs_SubjectFolder '\truncation_mapping.mat'],'mapping_data','mapping_events','-mat');  %could save as ASCII if needed, but 40 times bigger file
     
