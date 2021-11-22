@@ -5,21 +5,22 @@
 %to the Excel workbook.  The Excel workbook must have a worksheet named "Event Times"; that worksheet must have
 %at least these columns: Subject, EventID, EventName, Onset_sec, Duration_sec, Keep_Extra_After, Exclude
 
-ProcessingRoot= 'D:\NIRS Processing\NIRS Data\ROHC';
-%ProcessingRoot= 'D:\NIRS_Data\Randolph';
+ProcessingRoot= 'D:\NIRS_Data\Randolph';
 
 SelectFoldersByPattern = true; %if you set to true, you can use the SelectFolders_SearchPattern pattern to select all 
         % matching folders for processing.  If set to false, you must manually set the SubjectFolders list below.
 
-allow_unmatched_events = false;  %set this to 'true' if the original HDR file does not contain proper event
+allow_unmatched_events = true;  %set this to 'true' if the original HDR file does not contain proper event
             % markers at the times that you want to truncate around and/or set your new events.
         
-SelectFolders_SearchPattern = 'CB*';  
+SelectFolders_SearchPattern = 'SA*';  
 NIRx_RootFolder = [ProcessingRoot '\NIRx'];
 Nirs_RootFolder = [ProcessingRoot  '\Homer'];
-Events_ExcelFilename = [ProcessingRoot '\Analysis\ROHC Data Summary.xlsx'];
+Events_ExcelFilename = [ProcessingRoot '\Analysis\Data Summary.xlsx'];
 SD_File = [ProcessingRoot '\Homer\sdfile.sd'];
-Truncate_Align_segments = false;	
+Truncate_Align_segments = false;	%typically should leave set to false.  When true, the truncation method will introduce 
+	% additive offsets to force raw data trace to be continuous across truncated segments.
+Truncate_RetainAll = false; %if set to true, then the truncation process actually keeps ALL data (no truncation actually occurs)
 
 if SelectFoldersByPattern
     SubjectFolders = {};
@@ -131,7 +132,8 @@ for idx_subject=1:length(SubjectFolders)
     
     
     disp ' - truncating data'
-    [mapping_data, mapping_events] = NIRx_Truncate(Nirs_SubjectFolder, tab_events_subject, KeepBefore_secs, KeepAfter_secs, EventTimeTolerance_secs, Truncate_Align_segments);
+    [mapping_data, mapping_events] = NIRx_Truncate(Nirs_SubjectFolder, tab_events_subject, KeepBefore_secs, KeepAfter_secs, EventTimeTolerance_secs, ... 
+                                                   Truncate_Align_segments,  ~Truncate_RetainAll);
     %save the mapping from old to new index values and events
     save([Nirs_SubjectFolder '\truncation_mapping.mat'],'mapping_data','mapping_events','-mat');  %could save as ASCII if needed, but 40 times bigger file
     

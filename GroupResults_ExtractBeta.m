@@ -3,6 +3,8 @@
 %save the results into a text file.  The script can be easily reconfigured to extract other desired information, as
 %required.  
 %Tod Flak 26-May-2021 
+%TF 21-Nov-2021  added code to also output Z-score scaled Beta value
+%
 
 beta_scale = 1e6;
 excludedchannel_or_stim_outputblank = true;
@@ -40,7 +42,7 @@ if append_tofile
     fidOutput = fopen(output_filename,'at');
 else
     fidOutput = fopen(output_filename,'wt');
-    fprintf(fidOutput,  'DataGroup\tSubject\tRunName\tRunIndex\tCondition\tConditionIndex\tSpecies\tSource\tDetector\tChannel\tBeta_scaled\n');
+    fprintf(fidOutput,  'DataGroup\tSubject\tRunName\tRunIndex\tCondition\tConditionIndex\tSpecies\tSource\tDetector\tChannel\tBeta_scaled\tBeta_Z\n');
 end
 
 groupdata = load(groupresults_filename);
@@ -111,8 +113,13 @@ for idx_subj=1:length(groupdata.group.subjs)
         %of an event being excluded.
         perchannel_allzero = squeeze(min(beta_4d==0,[],[1 2 4]));
         perstim_allzero = squeeze(min(beta_4d==0,[],[1 2 3]));
-
+        beta_4d_NaN = beta_4d;
+        beta_4d_NaN(beta_4d_NaN==0)= NaN;
+        
         for idx_species=1:size(beta_4d,2)
+            species_mean =  mean(beta_4d_NaN(1,idx_species,:,:),'all', 'omitnan');
+            species_stddev = std(beta_4d_NaN(1,idx_species,:,:),0,'all', 'omitnan');
+            
             for idx_measure = 1:length(measures)
                 this_measure = measures(idx_measure);
                 for idx_stim=1:length(stims)
@@ -121,15 +128,16 @@ for idx_subj=1:length(groupdata.group.subjs)
                         
                         if ((perchannel_allzero(idx_measure) || perstim_allzero(idx_stim))  && excludedchannel_or_stim_outputblank)
                             %if the channel was excluded, output a blank for the beta
-                            fprintf(fidOutput, '%s\t%s\t%s\t%d\t%s\t%d\t%s\t%d\t%d\t%d\t%f\n', ...
+                            fprintf(fidOutput, '%s\t%s\t%s\t%d\t%s\t%d\t%s\t%d\t%d\t%d\t%f\t%f\n', ...
                                    DataGroup, subj_name, this_run.name, this_run.iRun, this_stim.name, idx_stim, Hb_species{idx_species}, ...
-                                   this_measure.sourceIndex, this_measure.detectorIndex,idx_measure,'');
+                                   this_measure.sourceIndex, this_measure.detectorIndex,idx_measure,'','');
                         else
-                            fprintf(fidOutput, '%s\t%s\t%s\t%d\t%s\t%d\t%s\t%d\t%d\t%d\t%f\n', ...
+                            fprintf(fidOutput, '%s\t%s\t%s\t%d\t%s\t%d\t%s\t%d\t%d\t%d\t%f\t%f\n', ...
                                    DataGroup, subj_name, this_run.name, this_run.iRun, this_stim.name, idx_stim, Hb_species{idx_species}, ...
-                                   this_measure.sourceIndex, this_measure.detectorIndex,idx_measure,beta_4d(1,idx_species,idx_measure,idx_stim)*beta_scale);
+                                   this_measure.sourceIndex, this_measure.detectorIndex,idx_measure, ...
+                                    beta_4d(1,idx_species,idx_measure,idx_stim)*beta_scale, ...
+                                   (beta_4d(1,idx_species,idx_measure,idx_stim) - species_mean)/species_stddev);
                         end
-                        
                 end
             end
         end

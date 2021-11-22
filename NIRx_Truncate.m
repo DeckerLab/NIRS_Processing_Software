@@ -1,4 +1,5 @@
-function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEvents_ForSubject, KeepBefore_secs, KeepAfter_secs, EventTimeTolerance_secs, align_segments)
+function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEvents_ForSubject, KeepBefore_secs, KeepAfter_secs, EventTimeTolerance_secs, ...
+            align_segments, do_truncation)
     %Caller provides path to a folder with .hdr, .wl1, .wl2 files; and a
     %table that describes the Events and periods for which sections to 
     %retain.  Table must have these fields: 
@@ -15,7 +16,7 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
     %  mapping_events is cell array; each element is a structure with the EventID value; and a 2-dim array, which 
     %              for each retained event shows the new event time (in seconds) and the row number in 
     %              tabEvents_ForSubject that was used to decide to retain the event.
-	% some more coomment
+	% 
     
     mapping_data = [];
     mapping_events={};
@@ -35,9 +36,19 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
         % this tolerance band (+/- seconds); So if user entered an event window at 60 seconds, and there is an 
         % event marker at 58.53 seconds with the expected EventID, we will assume this is a valid event
     end   
+	
+	% NOTE: use of align_segments=true will use additive offsets to force raw data trace to 
+	% be continuous across truncated segments.  However this introduce artifactual changes to the 
+	% eventual computed HbO/HbR values.  Therefore the use of this option is not recommended for most analyses.
     if ~exist('align_segments','var')
         align_segments = false;
     end
+	
+    %if desired, you can run this and keep all data... no truncation applied
+    if ~exist('do_truncation','var')
+        do_truncation = true;
+    end    
+    
     %look for these files:
     % *.wl1
     % *.wl2
@@ -81,15 +92,19 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
 
     %build a logical vector of datapoints to keep
     datacount = size(wl1_2,1);
-    datarows_tokeep = zeros(datacount,1);
-    for idx_hdrevent=1:size(tabEvents_ForSubject,1)
-        keep_start_frame = floor((tabEvents_ForSubject.Onset_sec(idx_hdrevent)-KeepBefore_secs)*sampling_freq)+1;
-        keep_end_frame = keep_start_frame + ceil((KeepBefore_secs + tabEvents_ForSubject.Duration_sec(idx_hdrevent) + ...
-                                                   tabEvents_ForSubject.Keep_Extra_After(idx_hdrevent) + ...
-                                                   KeepAfter_secs )*sampling_freq);
-        datarows_tokeep(keep_start_frame:keep_end_frame)=1;
+    if (do_truncation)
+        datarows_tokeep = zeros(datacount,1);
+        for idx_hdrevent=1:size(tabEvents_ForSubject,1)
+            keep_start_frame = floor((tabEvents_ForSubject.Onset_sec(idx_hdrevent)-KeepBefore_secs)*sampling_freq)+1;
+            keep_end_frame = keep_start_frame + ceil((KeepBefore_secs + tabEvents_ForSubject.Duration_sec(idx_hdrevent) + ...
+                                                       tabEvents_ForSubject.Keep_Extra_After(idx_hdrevent) + ...
+                                                       KeepAfter_secs )*sampling_freq);
+            datarows_tokeep(keep_start_frame:keep_end_frame)=1;
+        end
+    else
+        datarows_tokeep = ones(datacount,1);
     end
-    
+        
     %now do arithmetic shift of data to make values line up across the deletions we are about to make
     keep_window_index = 0;
     mapping_data = zeros(datacount,1);
@@ -107,9 +122,8 @@ function [mapping_data, mapping_events] = NIRx_Truncate(Nirs_foldername, tabEven
             if (keep_window_index>1)  %only need to shift for windows starting at #2
 				if (align_segments)
 					offset = startvals_nextwindow - wl1_2(idx_hdrevent,:);
+					wl1_2(idx_hdrevent:datacount,:) = wl1_2(idx_hdrevent:datacount,:) + offset;
 				end
-				
-                wl1_2(idx_hdrevent:datacount,:) = wl1_2(idx_hdrevent:datacount,:) + offset;
             end
         else
             if (in_window && (datarows_tokeep(idx_hdrevent)==0))  %if just ended a keep window
