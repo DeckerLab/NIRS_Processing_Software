@@ -9,6 +9,15 @@
 beta_scale = 1e6;
 excludedchannel_or_stim_outputblank = true;
 
+
+Hb_species = [{'HbO'},{'HbR'}];  %Note that nowhere is the order of values in the beta array specified as being 
+   % 1=HbO and 2=HbR.  We have simply observed that this seems to be the order in the array, so it is hard-coded
+   % here.  If there is a source of these names somewhere in the data structure, it should be used instead of this
+   % hard-coded order.
+
+Hb_species_output = [true false];   %This indicates which species data will be output; first valye is HbO, second is HbR. 
+                                    %If you don't want to output the HbR, just set this to [true false]  . 
+
 groupresults_filename = 'groupResults.mat'; %look in the current directory
 output_filename = 'groupResults.txt';
 path = [pwd '\'];  %get current directory
@@ -50,11 +59,6 @@ if isempty(groupdata); error('Selected file has no Matlab objects'); end
 if ~isfield(groupdata,'group'); error('Selected file does not contain the expected object ''group''.'); end
 
 groupdata.group.Load; %must call this to populate many of the datafields throughout the object
-
-Hb_species = [{'HbO'},{'HbR'}];  %Note that nowhere is the order of values in the beta array specified as being 
-   % 1=HbO and 2=HbR.  We have simply observed that this seems to be the order in the array, so it is hard-coded
-   % here.  If there is a source of these names somewhere in the data structure, it should be used instead of this
-   % hard-coded order.
 
 for idx_subj=1:length(groupdata.group.subjs)
     this_subj = groupdata.group.subjs(1,idx_subj);
@@ -117,31 +121,33 @@ for idx_subj=1:length(groupdata.group.subjs)
         beta_4d_NaN(beta_4d_NaN==0)= NaN;
         
         for idx_species=1:size(beta_4d,2)
-            species_mean =  mean(beta_4d_NaN(1,idx_species,:,:),'all', 'omitnan');
-            species_stddev = std(beta_4d_NaN(1,idx_species,:,:),0,'all', 'omitnan');
-            
-            for idx_measure = 1:length(measures)
-                this_measure = measures(idx_measure);
-                for idx_stim=1:length(stims)
-                    this_stim = stims(1,idx_stim);
-                        %fprintf(fidOutput, 'Subject\tRunName\tRunIndex\tCondition\tConditionIndex\tSpecies\tSource\tDetector\tChannel\tBeta');
-                        
-                        if ((perchannel_allzero(idx_measure) || perstim_allzero(idx_stim))  && excludedchannel_or_stim_outputblank)
-                            %if the channel was excluded, output a blank for the beta
-                            fprintf(fidOutput, '%s\t%s\t%s\t%d\t%s\t%d\t%s\t%d\t%d\t%d\t%f\t%f\n', ...
-                                   DataGroup, subj_name, this_run.name, this_run.iRun, this_stim.name, idx_stim, Hb_species{idx_species}, ...
-                                   this_measure.sourceIndex, this_measure.detectorIndex,idx_measure,'','');
-                        else
-                            fprintf(fidOutput, '%s\t%s\t%s\t%d\t%s\t%d\t%s\t%d\t%d\t%d\t%f\t%f\n', ...
-                                   DataGroup, subj_name, this_run.name, this_run.iRun, this_stim.name, idx_stim, Hb_species{idx_species}, ...
-                                   this_measure.sourceIndex, this_measure.detectorIndex,idx_measure, ...
-                                    beta_4d(1,idx_species,idx_measure,idx_stim)*beta_scale, ...
-                                   (beta_4d(1,idx_species,idx_measure,idx_stim) - species_mean)/species_stddev);
-                        end
+            if  (Hb_species_output(idx_species))
+                species_mean =  mean(beta_4d_NaN(1,idx_species,:,:),'all', 'omitnan');
+                species_stddev = std(beta_4d_NaN(1,idx_species,:,:),0,'all', 'omitnan');
+
+                for idx_measure = 1:length(measures)
+                    this_measure = measures(idx_measure);
+                    for idx_stim=1:length(stims)
+                        this_stim = stims(1,idx_stim);
+                            %fprintf(fidOutput, 'Subject\tRunName\tRunIndex\tCondition\tConditionIndex\tSpecies\tSource\tDetector\tChannel\tBeta');
+
+                            if ((perchannel_allzero(idx_measure) || perstim_allzero(idx_stim))  && excludedchannel_or_stim_outputblank)
+                                %if the channel was excluded, output a blank for the beta
+                                fprintf(fidOutput, '%s\t%s\t%s\t%d\t%s\t%d\t%s\t%d\t%d\t%d\t%f\t%f\n', ...
+                                       DataGroup, subj_name, this_run.name, this_run.iRun, this_stim.name, idx_stim, Hb_species{idx_species}, ...
+                                       this_measure.sourceIndex, this_measure.detectorIndex,idx_measure,'','');
+                            else
+                                fprintf(fidOutput, '%s\t%s\t%s\t%d\t%s\t%d\t%s\t%d\t%d\t%d\t%f\t%f\n', ...
+                                       DataGroup, subj_name, this_run.name, this_run.iRun, this_stim.name, idx_stim, Hb_species{idx_species}, ...
+                                       this_measure.sourceIndex, this_measure.detectorIndex,idx_measure, ...
+                                        beta_4d(1,idx_species,idx_measure,idx_stim)*beta_scale, ...
+                                       (beta_4d(1,idx_species,idx_measure,idx_stim) - species_mean)/species_stddev);
+                            end
+                    end
                 end
             end
         end
-        
+       
     end
 end
 
